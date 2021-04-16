@@ -1,6 +1,7 @@
 import pandas as pd
 from PIL import Image
 import streamlit as st
+import numpy as np
 from scipy import stats
 from scipy.stats import *
 import matplotlib.pyplot as plt
