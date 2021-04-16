@@ -235,8 +235,8 @@ st.write("""
 _max_width_()
 
 
-video_file = open('C:/Users/dpf.adm/Desktop/Streamlite-Teste/tutorial.mp4', 'rb')
-video_bytes = video_file.read()
+#video_file = open('C:/Users/dpf.adm/Desktop/Streamlite-Teste/tutorial.mp4', 'rb')
+#video_bytes = video_file.read()
 
 
 
@@ -311,10 +311,10 @@ with st.beta_expander("Executar Análise Estatística"):
 
 with st.beta_expander("Tutorial"):
     st.write(""" 
-    **Caso seja sua primeira vez utilizando o Acubens - ASI, confira o tutorial em vídeo abaixo**
+    **Caso seja sua primeira vez utilizando o Acubens - ASI, confira o tutorial em  abaixo**
     """)
 
-    st.video(video_bytes)
+    #st.video(video_bytes)
 
 
 with st.beta_expander("Métodos Matemáticos - Intervalo de Confiança"):
