@@ -322,12 +322,6 @@ with st.beta_expander("Métodos Matemáticos - Intervalo de Confiança"):
      **O método aplicado pela ferramenta é composto por diversas técnicas de análise de dados, conforme explicado abaixo:**
     """)
 
-    image = Image.open('C:/Users/dpf.adm/Desktop/Streamlite-Teste/Capturar.PNG')
-    #st.image(image)
-
-    image2 = Image.open('C:/Users/dpf.adm/Desktop/Streamlite-Teste/Capturar2.PNG')
-    #st.image(image2)
-
     st.write(r"""
     Seja $X_{1}\text{,...,}X_{n}$, uma amostra aleatória de tamanho  $n$  retirada de uma distribuição contínua com função de distribuição  $F(.)$. 
     Considere  $X_{(1)}\text{,...,} X_{(n)}$  a estatística ordenada da amostra e o vetor  $X =(X_{(1)}\text{,...,} X_{(n)})$.
@@ -393,8 +387,8 @@ with st.beta_expander("Métodos Matemáticos - Intervalo de Confiança"):
     
     """)
 
-    simu = pd.read_csv("C:/Users/dpf.adm/Desktop/Streamlite-Teste/simu.csv", sep=';', encoding='utf-8', low_memory=False)
-    simu_tabela = st.table(simu)
+    #simu = pd.read_csv("C:/Users/dpf.adm/Desktop/Streamlite-Teste/simu.csv", sep=';', encoding='utf-8', low_memory=False)
+    #simu_tabela = st.table(simu)
 
 
 with st.beta_expander("Sobre", expanded=True):
