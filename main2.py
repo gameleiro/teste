@@ -9,6 +9,7 @@ from numpy import float_, int_, ndarray
 from scipy.stats import gaussian_kde
 import base64
 from io import BytesIO
+import scipy.special as sc
 
 def to_excel(df):
     output = BytesIO()
