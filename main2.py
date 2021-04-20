@@ -10,6 +10,12 @@ from scipy.stats import gaussian_kde
 import base64
 from io import BytesIO
 import scipy.special as sc
+import xlsxwriter
+import statsmodels.api as sm
+import math as mt
+
+
+
 
 def to_excel(df):
     output = BytesIO()
@@ -57,25 +63,29 @@ def boxplot(data_frame):
         if(n<4):
             ax[p,0].hist(dt, density=True, histtype='step', color="#2466b6", alpha=.9, label='Histograma')
             ax[p,0].legend()
+            ax[p, 0].title.set_text(col)
         else:
             KDEpdf = gaussian_kde(dt, bw_method='silverman')
             x = np.linspace((0.8*dt.min()), (dt.max()*1.2), 2000)
             #print(x)
             ax[p,0].plot(x, KDEpdf(x), 'r', color="black", linestyle='-', lw=3, label='Densidade aproximada')
             ax[p,0].hist(dt, density=True, histtype='step', color="#2466b6", alpha=.9, label='Histograma')
+            ax[p,0].title.set_text(col)
 
             ax[p,0].legend()
 
         green_diamond = dict(markerfacecolor='g', marker='D')
         ax[p,1].boxplot(dt,notch=False, showfliers=True, flierprops=green_diamond)
+        ax[p, 1].title.set_text(col)
 
 
 
         p = p + 1
         #plt.show()
     descricao.columns = data_frame.columns
-    descricao.index = ['quantidade','média','desvio padrão','valor mínimo','25%','mediana','75%','valor máximo']
+    descricao.index = ['itens','média','desvio padrão','valor mínimo','25%','mediana','75%','valor máximo']
     st.table(descricao)
+
     st.pyplot(fig)
     plt.close()
 
@@ -85,6 +95,203 @@ def boxplot(data_frame):
     return
 
     #plt.close()
+
+
+def plotar(serie,item):
+    #tam = 1
+    fig, ax = plt.subplots(2, figsize=(5.6, 4.6*2))
+
+    x = serie.astype(np.float64).dropna()
+
+    dt = x
+
+
+    KDEpdf = gaussian_kde(dt, bw_method='silverman')
+    x = np.linspace((0.8 * dt.min()), (dt.max() * 1.2), 2000)
+    # print(x)
+    ax[0].plot(x, KDEpdf(x), 'r', color="black", linestyle='-', lw=3, label='Densidade aproximada')
+    ax[0].hist(dt, density=True, histtype='step', color="#2466b6", alpha=.9, label='Histograma')
+    ax[0].title.set_text(item)
+
+    ax[0].legend()
+
+    green_diamond = dict(markerfacecolor='g', marker='D')
+    ax[1].boxplot(dt, notch=False, showfliers=True, flierprops=green_diamond)
+    ax[1].title.set_text(item)
+    st.pyplot(fig)
+    plt.close()
+
+
+def plotar2(serie1, serie2, item):
+
+    fig, ax = plt.subplots(1, figsize=(5.6, 4.6*2*1))
+
+    y = serie1.astype(np.float64).dropna()
+    x = serie2.astype(np.float64).dropna()
+
+
+    ax.title.set_text(item)
+
+    b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
+
+
+    yhat = bo + b1 * x
+
+
+    # estimate stdev of yhat
+    sum_errs = ((y - yhat) ** 2).sum()
+    stdev = mt.sqrt(1 / (len(y) - 2) * sum_errs)
+    # calculate prediction interval
+    interval = 1.96 * stdev
+    #print('Prediction Interval: %.3f' % interval)
+
+
+
+
+    ax.scatter(x, y)
+
+    ax.set_xlabel("R²: " + str(round(r_value * r_value,2)), size=15)
+
+    st.pyplot(fig)
+    plt.close()
+
+    #st.write(y)
+    #st.write(y)
+
+    return r_value * r_value
+
+
+
+def boxplot2(data_frame):
+
+
+    df_filter = data_frame
+
+    for col in data_frame.columns:
+
+        data_frame[col] = data_frame[col].astype(str)
+        data_frame[col] = data_frame[col].str.replace(',', '.')
+        data_frame[col] = data_frame[col].astype(float)
+        data_frame[col].dropna(inplace=True)
+
+
+    df = data_frame
+    df = df.loc[:, ::2]
+
+    col1, col2, col3 = st.beta_columns(3)
+
+    with col1:
+        #st.header("Escolha o item")
+        item = st.radio("Escolha",(df.columns))
+
+        pos = data_frame.columns.get_loc(str(item))
+
+        x = data_frame.iloc[:,pos+1]
+        x1 = df_filter.iloc[:, pos + 1]
+        min_global = np.float(x.min())
+        max_global = np.float(x.max())
+        min_local = np.float(x1.min())
+        max_local = np.float(x1.max())
+
+        a,b = st.slider("Filtrar quantidade", min_global, max_global, (min_local, max_local), 1.0)
+
+        nome_coluna = data_frame.columns[pos+1]
+
+        logic = (((data_frame[nome_coluna]).astype(np.float64) >= a) & ((data_frame[nome_coluna]).astype(np.float64) <= b))
+
+        if(logic.sum() < 3):
+            st.markdown("""***É preciso selecionar ao menos 3 amostras***""")
+
+        else:
+            df_filter = data_frame[logic]
+
+
+
+        tabela_check = st.checkbox("Mostrar tabela")
+        if(tabela_check):
+            st.table(df_filter[df_filter.columns[pos:pos+2]])
+            #st.table(df_filter.iloc[:,pos:pos + 2])
+
+
+
+
+    with col2:
+        #st.header("Veja os graficos")
+        #st.write(data_frame[str(item)])
+        plotar(df_filter[str(item)],item)
+
+
+
+    with col3:
+
+        pos = df_filter.columns.get_loc(str(item))
+        #st.write(data_frame.iloc[:,[pos,pos+1]])
+        serie1 = df_filter.iloc[:,pos]
+        serie2 = df_filter.iloc[:,pos+1]
+
+
+
+        #st.write(serie2)
+        r2 = plotar2(serie1, serie2, item)
+
+
+
+
+
+
+
+    return df_filter, item, a, b, r2
+
+from sklearn.metrics import mean_squared_error
+
+def icRegressao(df_filter,item,nc, xh):
+
+
+    # https://online.stat.psu.edu/stat501/lesson/3/3.3
+    pos = df_filter.columns.get_loc(str(item))
+    #st.write(df_filter.iloc[:,[0,0+1]])
+
+
+
+    y = df_filter.iloc[:, 0].astype(np.float64).dropna()
+    x = df_filter.iloc[:, 0 + 1].astype(np.float64).dropna()
+
+    n_1 = df_filter[item].count()
+
+    b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
+
+
+
+
+    yhat = bo + b1 * x
+
+
+
+    # estimate stdev of yhat
+    sum_errs = ((y - yhat) ** 2).sum() / (len(y) - 2)
+
+
+
+
+    sigma2_est = sum_errs/ (len(y) - 2) #MSE
+
+    t3 = (np.float(xh) - x.mean()) ** 2 / ((x - x.mean()) ** 2).sum()
+
+    erroPI = mt.sqrt(sigma2_est * (1 + 1 / len(y) + t3))
+
+    # calculate prediction interval
+    t_coeficiente = t.ppf(0.5 + 0.5 * nc, n_1 - 2)
+    interval = erroPI*t_coeficiente
+
+    #print('Prediction Interval: %.3f' % interval)
+
+    yhat_out = bo + b1 * np.float(xh)
+
+
+    lower, upper = yhat_out - interval, yhat_out + interval
+
+
+    return round(yhat_out,2), round(lower,2), round(upper,2)
 
 
 def dp_MJ(data, p):
@@ -185,12 +392,109 @@ def processaDf(df, mr=0, nc=0.95):
 
 
         x = pd.DataFrame()
-        x['Média'] = df.mean().astype(float)
+        #x['Média'] = df.mean().astype(float)
         x['Outliers Removidos'] = n_out
         x['Observação'] = obs
         x['Mediana'] = mediana
         x['Limite Inferior'] = li
         x['Limite Superior'] = ls
+
+    return x
+
+
+
+def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana - Distribuição Livre"):
+
+    obs = []
+    n_out = []
+    n = []
+    ls = []
+    li = []
+    est = []
+
+
+
+    n_0 = df[col].count()
+    df[col] = remover_outliers(df[col], mr)
+    n_1 = df[col].count()
+
+    logic = pd.isna(df)
+
+    df = (df[~logic[col]])
+
+    if mr == 0:
+        obs_rm = "Optou-se por não utilizar método de remoção de outliers." + "  "
+    if mr == 1:
+        obs_rm = "A remoção de Outliers foi realizada pelo método Boxplot. " + " "
+    if mr == 2:
+        obs_rm = "A remoção de Outliers foi realizada pelo método z-score." + " "
+
+
+
+    n_out.append(n_0 - n_1)
+
+    if (n_1 < 3):
+        obs.append("Menos de 3 amostras válidas")
+        est.append(0)
+        ls.append(0)
+        li.append(0)
+    else:
+
+
+        t_coeficiente = t.ppf(0.5 + 0.5 * nc, n_1 - 1)
+
+        dados = df[col].dropna()
+
+        if(estimador == "Mediana - Distribuição Livre"):
+            mediana_aux = medianaIgor(dados, 0.5)
+            dp_aux = dp_MJ(dados, 0.5)
+
+            est.append(mediana_aux)
+            ls.append(mediana_aux + t_coeficiente * dp_aux / 2)
+            li.append(mediana_aux - t_coeficiente * dp_aux / 2)
+
+            obs.append(" A etapa de investigação dos dados filtrou as quantidades dos elementos da amostra para intervalo de " + str(a) + " - " + str(b) +
+                       ". " + obs_rm + "Foi utilizado o estimador não paramétrico de distribuição livre para a mediana com "
+                       + "nível de confiança de " + str(round(nc*100)) + "%"
+                       +  " O valor do coeficiente de determinação vale R²=" + str(round(r2, 2)))
+
+        if (estimador =="Mínimos Quadrados"):
+
+            y_out, lower, upper = icRegressao(df,item,nc,qtd)
+
+            est.append(y_out)
+            ls.append(upper)
+            li.append(lower)
+            obs.append(
+                " A etapa de investigação dos dados filtrou as quantidades dos elementos da amostra para intervalo de " + str(round(a)) + " até " + str(round(b)) + ". "
+                + obs_rm + "Foi utilizada a predição pelo método dos mínimos quadrados com "
+                + "nível de confiança de " + str(round(nc * 100)) + "% " + "para uma quantidade questionada igual a " + str(qtd)
+                + ". O valor do coeficiente de determinação vale R²=" + str(round(r2, 2)))
+
+
+
+    n.append(n_1)
+
+    x = pd.DataFrame()
+
+
+
+
+
+    x['amostra'] =  n
+
+    x['Outliers Removidos'] = n_out
+
+    if (estimador == "Mediana - Distribuição Livre"):
+        x['Estimador Mediana'] = est
+
+    if (estimador == "Mínimos Quadrados"):
+        x['Estimador MQ'] = est
+
+    x['Limite Inferior'] = li
+    x['Limite Superior'] = ls
+    x['Observação'] = obs
+
 
     return x
 
@@ -243,7 +547,7 @@ _max_width_()
 
 
 with st.beta_expander("Executar Análise Estatística"):
-    st.write("""  **Etapa 1  - Leitura do arquivo** """)
+    st.subheader("""  **Etapa 1  - Leitura do arquivo** """)
 
     uploaded_file = st.file_uploader("Escolha um arquivo", ["csv"])
 
@@ -255,14 +559,23 @@ with st.beta_expander("Executar Análise Estatística"):
 
         st.write(df)
 
-        st.write("""  **Etapa 2 - Investigação dos Dados: Distribuição, Histograma e Boxplot** """)
-        boxplot(df)
+        st.subheader("""  **Etapa 2 - Investigação dos Dados: Distribuição, Histograma e Boxplot** """)
 
 
-        left_column, right_column = st.beta_columns(2)
+        df, item, a,b, r2 = boxplot2(df)
+
+        st.markdown(""" **Resumo Estatístico Descritivo**""")
+        descricao = df.describe()
+        descricao.index = ['Tamanho da amostra', 'média', 'desvio padrão', 'valor mínimo', '25%', 'mediana', '75%',
+                           'valor máximo']
+
+        pos = df.columns.get_loc(str(item))
+        st.table(descricao.iloc[:,pos:(pos+2)])
+
+        left_column, center_column, right_column = st.beta_columns(3)
         # You can use a column just like st.sidebar:
         with left_column:
-            st.write("""  **Etapa 3 - Remoção de Outliers** """)
+            st.subheader("""  **Etapa 3 - Remoção de Outliers** """)
             mr = st.radio('Método',("Nenhum", "BoxPlot", "z-score"))
 
             if mr == "Nenhum":
@@ -274,8 +587,21 @@ with st.beta_expander("Executar Análise Estatística"):
             if mr == "z-score":
                 mr = 2
 
+        with center_column:
+            st.subheader("""  **Etapa 4 - Escolha do Estimador** """)
+            estimador = st.radio('Estimador', ("Mediana - Distribuição Livre", "Mínimos Quadrados"))
+
+            if estimador =="Mediana - Distribuição Livre":
+                #st.write("")
+                qtd = 0
+            if estimador =="Mínimos Quadrados":
+                #st.write("")
+                qtd = st.text_input("Digite a quantidade",0)
+                #icRegressao(df, item, nc, np.float(qtd))
+
+
         with right_column:
-            st.write("""  **Etapa 4 - Cálculo do Intervalo de Confiança** """)
+            st.subheader("""  **Etapa 5 - Intervalo de Confiança** """)
             nc = st.radio('Nível de Confiança', ("95%", "99%", "90%"))
 
             if nc == "95%":
@@ -288,24 +614,58 @@ with st.beta_expander("Executar Análise Estatística"):
                 nc = 0.90
 
 
-        x = processaDf(df, mr, nc)
+
+        pos = df.columns.get_loc(str(item))
+        if ((pos +2) >= len(df.columns)):
+            x = processaDf2(df.iloc[:, pos::], item, mr, nc, a, b, r2, qtd, estimador)
+            #st.write(df.iloc[:, pos::])
+        else:
+            x= processaDf2(df.iloc[:,pos:(pos+2)], item, mr, nc, a ,b, r2, qtd, estimador)
+            #st.write(df.iloc[:, pos:(pos+2):])
+
+
+
+        #st.markdown("***Resumo da análise para o item:*** " + str(df.columns[pos]))
 
 
         y = pd.DataFrame()
 
+
+        y['Amostra analisada (n)'] = x['amostra']
         y['Outliers Removidos'] = x['Outliers Removidos']
-        y['Estimador Mediana'] = x['Mediana']
+
+        if (estimador == "Mediana - Distribuição Livre"):
+            y['Estimador Mediana'] = x['Estimador Mediana']
+        if (estimador == "Mínimos Quadrados"):
+            y['Estimador MQ'] = x['Estimador MQ']
+
         y['Limite Inferior'] = x['Limite Inferior']
         y['Limite Superior'] = x['Limite Superior']
-        #y['Observação'] = x['Observação']
+
+        y['Observação'] = x['Observação']
+
+        y.index = [str(df.columns[pos])]
 
         st.table(y)
 
-        df2 = y  # your dataframe
+        #plotly_table(y)
+        #st.table(df[df.columns[pos:pos+2]])
+        #st.table(df)
 
-        st.write("Cique no botão para gerar um arquivo compatível com Excel")
-        if st.button("Gerar arquivo"):
-            st.markdown(get_table_download_link(df2), unsafe_allow_html=True)
+
+
+        #df2 = y  # your dataframe
+
+        #st.write("Cique no botão para gerar um arquivo compatível com Excel")
+
+
+
+        #if st.button("Gerar arquivo"):
+            #st.markdown(get_table_download_link(df2), unsafe_allow_html=True)
+
+
+
+
 
 
 
@@ -313,17 +673,22 @@ with st.beta_expander("Executar Análise Estatística"):
 
 with st.beta_expander("Tutorial"):
     st.write(""" 
+    *Em construção*
+    
     **Caso seja sua primeira vez utilizando o Acubens - ASI, confira o tutorial em  abaixo**
     """)
 
     #st.video(video_bytes)
 
 
-with st.beta_expander("Métodos Matemáticos - Intervalo de Confiança"):
+with st.beta_expander("Métodos Matemáticos "):
     st.write(""" 
+    *Em Construção*
+    
      **O método aplicado pela ferramenta é composto por diversas técnicas de análise de dados, conforme explicado abaixo:**
     """)
 
+    st.subheader("Estimador não paramétrico de distribuição livre para a mediana")
     st.write(r"""
     Seja $X_{1}\text{,...,}X_{n}$, uma amostra aleatória de tamanho  $n$  retirada de uma distribuição contínua com função de distribuição  $F(.)$. 
     Considere  $X_{(1)}\text{,...,} X_{(n)}$  a estatística ordenada da amostra e o vetor  $X =(X_{(1)}\text{,...,} X_{(n)})$.
@@ -395,7 +760,7 @@ with st.beta_expander("Métodos Matemáticos - Intervalo de Confiança"):
 
 with st.beta_expander("Sobre", expanded=True):
     st.write(""" 
-    Idealizada pelos Peritos Criminais Federais: **Igor Gameleiro**, **Rafaela da Fonte** e **Vitor Gomes**, a ferramenta busca auxiliar na análise de sobrepreço a partir de técnicas de visualização de dados e de estimação não paramétrica. 
+    Idealizada pelos Peritos Criminais Federais: **Igor Gameleiro**, **Rafaela da Fonte** e **Vitor Gomes**, a ferramenta busca auxiliar na análise de sobrepreço a partir de técnicas de visualização de dados e de inferência estatística. 
     """)
 
 
