@@ -150,6 +150,9 @@ def plotar2(serie1, serie2, item):
 
     ax.scatter(x, y)
 
+    plt.plot(x,yhat,color='red')
+
+
     ax.set_xlabel("R²: " + str(round(r_value * r_value,2)), size=15)
 
     st.pyplot(fig)
@@ -311,6 +314,8 @@ def dp_MJ(data, p):
 
     C1 = np.dot(w, data)  # valor esperado E[X]
     # print(C1)
+
+
     C2 = np.dot(w, data ** 2)  # valor esperado E[X^2]
 
     mj = np.sqrt(C2 - C1 ** 2)
@@ -456,7 +461,7 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
             obs.append(" A etapa de investigação dos dados filtrou as quantidades dos elementos da amostra para intervalo de " + str(a) + " - " + str(b) +
                        ". " + obs_rm + "Foi utilizado o estimador não paramétrico de distribuição livre para a mediana com "
                        + "nível de confiança de " + str(round(nc*100)) + "%"
-                       +  " O valor do coeficiente de determinação vale R²=" + str(round(r2, 2)))
+                       +  ". O valor do coeficiente de determinação vale R²=" + str(round(r2, 2)))
 
         if (estimador =="Mínimos Quadrados"):
 
@@ -681,14 +686,52 @@ with st.beta_expander("Tutorial"):
     #st.video(video_bytes)
 
 
-with st.beta_expander("Métodos Matemáticos "):
-    st.write(""" 
-    *Em Construção*
+
+with st.beta_expander("Metodologia e Métodos Matemáticos "):
+
+    st.header("Metodologia")
+    st.write(r"""
+    São disponibilizadas ferramentas técnicas de análise de dados para auxiliar o usuário em sua análise
+    A aplicação consiste em 3 etapas a serem percorridas, conforme descrito abaixo.
+       """)
+    st.subheader("1. Investigação dos Dados:")
+    st.write(r"""
+
+    1.1  Histograma, Distribuição estimada, Boxplot para a variável ***Preço***
     
-     **O método aplicado pela ferramenta é composto por diversas técnicas de análise de dados, conforme explicado abaixo:**
+    1.2  Gráfico de Dispersão: ***Quantidade x Preço***
+    
+    1.3  Seleção de subconjunto através da filtragem dos limites para o intervalo da variável ***Quantidade***
+
+
     """)
 
-    st.subheader("Estimador não paramétrico de distribuição livre para a mediana")
+
+    st.subheader("2. Métodos de estimação:")
+    st.write(r"""
+    
+    2.1 Estimador não paramétrico de distribuição livre para a **Mediana** populacional
+    
+    2.2 Estimador Mínimos Quadrados 
+    
+    """)
+
+    st.subheader("3. Síntese da Análise")
+    st.write(r"""
+
+    Apresentação de tabela com síntese da análise realizado e disponibilização de texto resumo gerado dinamicamente. 
+
+    """)
+
+
+    st.header("Métodos Matemáticos")
+
+    st.write("""
+    Esta seção é destinada a apresentação da formulação matemática para os métodos de estimação disponíveis nesta aplicação
+    
+    """)
+    st.subheader("Estimador não paramétrico de distribuição livre para a **Mediana** populacional")
+
     st.write(r"""
     Seja $X_{1}\text{,...,}X_{n}$, uma amostra aleatória de tamanho  $n$  retirada de uma distribuição contínua com função de distribuição  $F(.)$. 
     Considere  $X_{(1)}\text{,...,} X_{(n)}$  a estatística ordenada da amostra e o vetor  $X =(X_{(1)}\text{,...,} X_{(n)})$.
@@ -744,15 +787,73 @@ with st.beta_expander("Métodos Matemáticos "):
     Define-se o intervalo de confiança com nível de confiança $100(1-\alpha)\%$:
     
     $$
-    IC_{\alpha} = Q_{0.5} \pm t_{\alpha,n-1} S_{0.5}
+    \boxed{IC_{\alpha} = Q_{0.5} \pm t_{\alpha,n-1} S_{0.5}}
     $$
     
     onde $\alpha$ é o nível de significância e $t_{\alpha,n-1}$ é o valor da distribuição bicaudal **t-Student** para $n-1$ graus de liberdade.  
     
-    O resultado da simulação do nível de confiança para o intervalo de confiança proposto foi realizado através de 100.000 amostras aleatórias para cada tipo de distribuição e para cada um dos valores de n.
-    
-    
+       
+
     """)
+
+    st.subheader("Estimador Mínimos Quadrados ")
+
+    st.write(r"""
+    
+    Para a utilização deste método, os seguintes requisitos devem ser observados:
+    
+    1) A Quantidade questionada deve estar dentro do escopo do modelo, ou seja, dentro dos limites utilizados para a modelagem
+    
+    2) O erro deve ser independente, possuir distribuição normal e ser homocedástico. O requisito da normalidade recai sobre a necessidade de se conhecer a distribuição dos erros para o cálculo do intervalo de confiança.
+    
+    
+    São utilizados os pares $(x_{i},y_{i})$, onde $x_{i}$ é a quantidade observada e $y_{i}$ é o preço observado. Pode-se estabelecer uma regressão linear simples cujo modelo estatístico é:
+    
+
+    $$
+    {Y}_{i} = b_{0} + b_{1}x_{i} + \epsilon_{i}
+    $$
+    
+    $Y_{i}$ é uma variável aleatória e representa o valor da variável resposta (variável dependente) - **Preço** 
+    
+    $x_{i}$ representa o valor da variável explicativa (variável independente) - **Quantidade**
+    
+    $b_{0}$ e $b_{1}$ são os parâmetros do modelo, que serão estimados, e que definem a reta de regressão
+    
+    As estimativas de mínimos quadrados para os parâmetros $b_{0}$ e $b_{1}$ são:
+    
+    $$
+    \hat{b}_{1} = \frac{S_{xy}}{S_{xx}} 
+    $$
+    
+    $$
+    \hat{b}_{0} = \bar{Y} - \hat{b}_{1} \bar{x}
+    $$
+    
+    A Soma de Quadrados dos Resíduos (erros),
+    $$
+    SQE = \displaystyle\sum_{i=1}^{n} \epsilon_{i}^{2}
+    $$
+    É um estimador viciado para variância residual (dos erros) $\sigma^{2}$, pois $E[SQE] = (n-2) \sigma^{2}$.
+    
+    Desta forma, utiliza-se o estimador não viciado dado por
+    $$
+    \hat{\sigma}^{2} = QME = \frac {SQE}{(n-2)}
+    $$
+    $QME$ é o Quadrado Médio dos Erros.
+    
+    Com os parâmetros do modelo definido, pode-se estimar uma resposta a partir de um valor observado $x_{h}$, tal que $\hat{y}_{h} = \hat{b}_{0} + \hat{b}_{1}x_{h}$.
+    
+    
+    O intervalo de confiança para a predição $\hat{y}_{h}$ é definido como:
+    
+    $$
+    \boxed{IC_{\alpha} = \hat{y}_{h} \pm t_{\alpha,n-2} \sqrt{QME \left( 1 + \frac 1 n +  \frac {x_{h} - \bar{x}} {\displaystyle\sum_{i=1}^{n}(x_{i} - \bar{x})}  \right) }}
+    $$
+    
+    
+
+       """)
 
     #simu = pd.read_csv("C:/Users/dpf.adm/Desktop/Streamlite-Teste/simu.csv", sep=';', encoding='utf-8', low_memory=False)
     #simu_tabela = st.table(simu)
@@ -761,6 +862,9 @@ with st.beta_expander("Métodos Matemáticos "):
 with st.beta_expander("Sobre", expanded=True):
     st.write(""" 
     Idealizada pelos Peritos Criminais Federais: **Igor Gameleiro**, **Rafaela da Fonte** e **Vitor Gomes**, a ferramenta busca auxiliar na análise de sobrepreço a partir de técnicas de visualização de dados e de inferência estatística. 
+    
+    **Atenção:** Esta aplicação **não** é normatizada pela **Policia Federal**. O usuário tem total responsabildiade sobre o uso da mesma. O código fonte pode ser obtido através de solicitação ao email: gameleiro.iog@pf.gov.br
+    
     """)
 
 
