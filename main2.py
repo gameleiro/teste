@@ -602,7 +602,6 @@ def remover_outliers(serie = pd.Series([],dtype="float64"), mr=0):
 
         z = np.abs(stats.zscore(serie))
         for i in range(len(serie)):
-            st.write(i)
             if (z[i] > 3):
                 serie[i] = np.nan
 
