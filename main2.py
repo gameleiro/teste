@@ -147,7 +147,6 @@ def plotar2(serie1, serie2, item):
 
 
 
-
     ax.scatter(x, y)
 
     plt.plot(x,yhat,color='red')
@@ -164,6 +163,44 @@ def plotar2(serie1, serie2, item):
     return r_value * r_value
 
 
+def plotar3(serie1, serie2, item, qtd, y_out, lower, upper):
+
+    fig, ax = plt.subplots(1, figsize=(5.6, 4.6*1*1))
+
+    y = serie1.astype(np.float64).dropna()
+    x = serie2.astype(np.float64).dropna()
+
+
+    ax.title.set_text(item)
+
+    b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
+
+
+    yhat = bo + b1 * x
+
+
+    # estimate stdev of yhat
+    sum_errs = ((y - yhat) ** 2).sum()
+    stdev = mt.sqrt(1 / (len(y) - 2) * sum_errs)
+
+
+
+
+    ax.scatter(x, y)
+
+    plt.plot(x,yhat,color='red')
+    plt.errorbar(np.int(qtd),y_out, yerr=(upper-lower)/2, color='black', fmt='o')
+
+
+    ax.set_xlabel("R²: " + str(round(r_value * r_value,2)), size=15)
+
+    st.pyplot(fig)
+    plt.close()
+
+    #st.write(y)
+    #st.write(y)
+
+    return r_value * r_value
 
 def boxplot2(data_frame):
 
@@ -242,10 +279,54 @@ def boxplot2(data_frame):
 
 
 
-
     return df_filter, item, a, b, r2
 
-from sklearn.metrics import mean_squared_error
+
+
+
+def boxplot_fim(data_frame,item, qtd, y_out, lower, upper):
+
+
+    df_filter = data_frame
+
+    for col in data_frame.columns:
+
+        data_frame[col] = data_frame[col].astype(str)
+        data_frame[col] = data_frame[col].str.replace(',', '.')
+        data_frame[col] = data_frame[col].astype(float)
+        data_frame[col].dropna(inplace=True)
+
+
+
+    df = data_frame
+    df = df.loc[:, ::2]
+
+    col1, col2 = st.beta_columns(2)
+
+
+    with col1:
+        st.table(df)
+
+
+    with col2:
+
+        pos = df_filter.columns.get_loc(str(item))
+        #st.write(data_frame.iloc[:,[pos,pos+1]])
+        serie1 = df_filter.iloc[:,pos]
+        serie2 = df_filter.iloc[:,pos+1]
+
+        r2 = plotar3(serie1, serie2, item, qtd, y_out, lower, upper)
+
+
+
+
+
+
+
+    return df_filter, r2
+
+
+
 
 def icRegressao(df_filter,item,nc, xh):
 
@@ -410,6 +491,9 @@ def processaDf(df, mr=0, nc=0.95):
 
 def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana - Distribuição Livre"):
 
+
+
+
     obs = []
     n_out = []
     n = []
@@ -465,7 +549,10 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
 
         if (estimador =="Mínimos Quadrados"):
 
-            y_out, lower, upper = icRegressao(df,item,nc,qtd)
+            #st.table(df)
+
+            y_out, lower, upper = icRegressao(df.dropna(),item,nc,qtd)
+            df, r2 = boxplot_fim(df.dropna(), item, qtd, y_out, lower, upper)
 
             est.append(y_out)
             ls.append(upper)
@@ -518,7 +605,8 @@ def remover_outliers(serie = pd.Series([],dtype="float64"), mr=0):
                 serie[i] = np.nan
 
     if (mr == 1):
-        serie[ (serie > ls ) | (serie < lin ) ] = np.nan
+        serie[ (serie > ls )] = np.nan
+        serie[(serie < lin)] = np.nan
 
     return serie
 
@@ -652,6 +740,11 @@ with st.beta_expander("Executar Análise Estatística"):
         y.index = [str(df.columns[pos])]
 
         st.table(y)
+
+
+
+
+
 
         #plotly_table(y)
         #st.table(df[df.columns[pos:pos+2]])
