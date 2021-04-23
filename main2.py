@@ -305,7 +305,10 @@ def boxplot_fim(data_frame,item, qtd, y_out, lower, upper):
 
 
     with col1:
-        st.table(df)
+        pos = df_filter.columns.get_loc(str(item))
+        st.subheader("Dados analisados")
+        st.dataframe(df_filter[df_filter.columns[pos:pos + 2]])
+
 
 
     with col2:
@@ -430,7 +433,7 @@ def medianaIgor(data, p):
 
 
 def abrirArquivo(arquivo):
-    df = pd.read_csv(uploaded_file, sep=';', encoding='utf-8', low_memory=False)
+    df = pd.read_csv(arquivo, sep=';', encoding='utf-8', low_memory=False)
     return df
 
 def processaDf(df, mr=0, nc=0.95):
@@ -492,8 +495,6 @@ def processaDf(df, mr=0, nc=0.95):
 def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana - Distribuição Livre"):
 
 
-
-
     obs = []
     n_out = []
     n = []
@@ -502,9 +503,8 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
     est = []
 
 
-
     n_0 = df[col].count()
-    df[col] = remover_outliers(df[col], mr)
+    df[col] = remover_outliers(df[col].dropna(), np.int(mr))
     n_1 = df[col].count()
 
     logic = pd.isna(df)
@@ -598,11 +598,14 @@ def remover_outliers(serie = pd.Series([],dtype="float64"), mr=0):
     ls = serie.quantile(0.75) + 1.5*iq
     lin = serie.quantile(0.25) - 1.5*iq
 
-    if(mr == 2):
+    if (mr == 2):
+
         z = np.abs(stats.zscore(serie))
-        for i,v in serie.items():
+        for i in range(len(serie)):
+            st.write(i)
             if (z[i] > 3):
                 serie[i] = np.nan
+
 
     if (mr == 1):
         serie[ (serie > ls )] = np.nan
@@ -647,12 +650,12 @@ with st.beta_expander("Executar Análise Estatística"):
 
     if uploaded_file is not None:
 
-
+        df = pd.DataFrame()
         df = abrirArquivo(uploaded_file)
 
         st.write(df)
 
-        st.subheader("""  **Etapa 2 - Investigação dos Dados: Distribuição, Histograma e Boxplot** """)
+        st.subheader("""  **Etapa 2 - Investigação e Seleção ** """)
 
 
         df, item, a,b, r2 = boxplot2(df)
@@ -665,10 +668,12 @@ with st.beta_expander("Executar Análise Estatística"):
         pos = df.columns.get_loc(str(item))
         st.table(descricao.iloc[:,pos:(pos+2)])
 
+
+        st.subheader(""" **Etapa 3 - Análise Estatística** """)
         left_column, center_column, right_column = st.beta_columns(3)
         # You can use a column just like st.sidebar:
         with left_column:
-            st.subheader("""  **Etapa 3 - Remoção de Outliers** """)
+            st.write("""  **Etapa 3.1 - Remoção de Outliers** """)
             mr = st.radio('Método',("Nenhum", "BoxPlot", "z-score"))
 
             if mr == "Nenhum":
@@ -681,7 +686,7 @@ with st.beta_expander("Executar Análise Estatística"):
                 mr = 2
 
         with center_column:
-            st.subheader("""  **Etapa 4 - Escolha do Estimador** """)
+            st.write("""  **Etapa 3.2 - Escolha do Estimador** """)
             estimador = st.radio('Estimador', ("Mediana - Distribuição Livre", "Mínimos Quadrados"))
 
             if estimador =="Mediana - Distribuição Livre":
@@ -694,7 +699,7 @@ with st.beta_expander("Executar Análise Estatística"):
 
 
         with right_column:
-            st.subheader("""  **Etapa 5 - Intervalo de Confiança** """)
+            st.write("""  **Etapa 3.3 - Intervalo de Confiança** """)
             nc = st.radio('Nível de Confiança', ("95%", "99%", "90%"))
 
             if nc == "95%":
@@ -784,37 +789,60 @@ with st.beta_expander("Metodologia e Métodos Matemáticos "):
 
     st.header("Metodologia")
     st.write(r"""
-    São disponibilizadas ferramentas técnicas de análise de dados para auxiliar o usuário em sua análise
+    São disponibilizadas ferramentas técnicas de análise de dados para auxiliar o usuário em sua análise.
     A aplicação consiste em 3 etapas a serem percorridas, conforme descrito abaixo.
        """)
-    st.subheader("1. Investigação dos Dados:")
+    st.subheader("1. Leitura dos dados:")
     st.write(r"""
 
-    1.1  Histograma, Distribuição estimada, Boxplot para a variável ***Preço***
-    
-    1.2  Gráfico de Dispersão: ***Quantidade x Preço***
-    
-    1.3  Seleção de subconjunto através da filtragem dos limites para o intervalo da variável ***Quantidade***
+    A leitura dos dados é realizada através de um arquivo **csv** que deve conter um par de colunas | ***Preço*** | ***Quantidade*** | para cada item de interesse.
+
+   
+
+
+    """)
+
+    st.subheader("2. Investigação e Seleção:")
+    st.write(r"""
+
+    2.1  Histograma, Distribuição estimada, Boxplot para a variável ***Preço***
+
+    2.2  Gráfico de Dispersão e Regressão Linear: ***Quantidade x Preço***
+
+    2.3  Seleção de subconjunto através da filtragem dos limites para o intervalo da variável ***Quantidade***
 
 
     """)
 
 
-    st.subheader("2. Métodos de estimação:")
+    st.subheader("3. Análise Estatística:")
     st.write(r"""
     
-    2.1 Estimador não paramétrico de distribuição livre para a **Mediana** populacional
+    Nesta etapa deverá ser escolhido o método de remoção de *outliers*, o método de análise estatística e o nível de confiança para o intervalo a ser calculado.
     
-    2.2 Estimador Mínimos Quadrados 
+    A aplicação dispõe de 3 métodos de remoção de *outliers* para a variável ***Preço***, quais sejam:
+    
+          i. Nenhum
+    
+         ii. Boxplot
+    
+        iii. z-score
+    
+    A aplicação dispõe de 2 métodos de análise estatística, quais sejam:
+    
+         i. Estimador não paramétrico de distribuição livre para a Mediana populacional
+    
+        ii. Estimador Mínimos Quadrados 
+    
+       
+    
+    Ao final é apresentada uma tabela com síntese da análise realizada e texto resumo gerado dinamicamente.
     
     """)
 
-    st.subheader("3. Síntese da Análise")
-    st.write(r"""
 
-    Apresentação de tabela com síntese da análise realizado e disponibilização de texto resumo gerado dinamicamente. 
 
-    """)
+
 
 
     st.header("Métodos Matemáticos")
@@ -826,6 +854,7 @@ with st.beta_expander("Metodologia e Métodos Matemáticos "):
     st.subheader("Estimador não paramétrico de distribuição livre para a **Mediana** populacional")
 
     st.write(r"""
+    
     Seja $X_{1}\text{,...,}X_{n}$, uma amostra aleatória de tamanho  $n$  retirada de uma distribuição contínua com função de distribuição  $F(.)$. 
     Considere  $X_{(1)}\text{,...,} X_{(n)}$  a estatística ordenada da amostra e o vetor  $X =(X_{(1)}\text{,...,} X_{(n)})$.
 
@@ -958,6 +987,8 @@ with st.beta_expander("Sobre", expanded=True):
     
     **Atenção:** Esta aplicação **não** é normatizada pela **Policia Federal**. O usuário tem total responsabildiade sobre o uso da mesma. O código fonte pode ser obtido através de solicitação ao email: gameleiro.iog@pf.gov.br
     
+    
+    *Versão 1.0*
     """)
 
 
