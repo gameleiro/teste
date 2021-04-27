@@ -16,7 +16,6 @@ import math as mt
 
 
 
-
 def to_excel(df):
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -94,30 +93,29 @@ def boxplot(data_frame):
 
     return
 
-    #plt.close()
 
 
 def plotar(serie,item):
-    #tam = 1
     fig, ax = plt.subplots(2, figsize=(5.6, 4.6*2))
 
     x = serie.astype(np.float64).dropna()
 
     dt = x
 
-
     KDEpdf = gaussian_kde(dt, bw_method='silverman')
     x = np.linspace((0.8 * dt.min()), (dt.max() * 1.2), 2000)
     # print(x)
     ax[0].plot(x, KDEpdf(x), 'r', color="black", linestyle='-', lw=3, label='Densidade aproximada')
     ax[0].hist(dt, density=True, histtype='step', color="#2466b6", alpha=.9, label='Histograma')
-    ax[0].title.set_text(item)
+    ax[0].title.set_text(item + " - Distribuição do Preço")
+
 
     ax[0].legend()
 
     green_diamond = dict(markerfacecolor='g', marker='D')
     ax[1].boxplot(dt, notch=False, showfliers=True, flierprops=green_diamond)
-    ax[1].title.set_text(item)
+    ax[1].title.set_text(item + " - Boxplot do Preço")
+
     st.pyplot(fig)
     plt.close()
 
@@ -130,7 +128,7 @@ def plotar2(serie1, serie2, item):
     x = serie2.astype(np.float64).dropna()
 
 
-    ax.title.set_text(item)
+    ax.title.set_text(item + " - Dispersão: Quantidade x Preço")
 
     b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
 
@@ -141,9 +139,6 @@ def plotar2(serie1, serie2, item):
     # estimate stdev of yhat
     sum_errs = ((y - yhat) ** 2).sum()
     stdev = mt.sqrt(1 / (len(y) - 2) * sum_errs)
-    # calculate prediction interval
-    interval = 1.96 * stdev
-    #print('Prediction Interval: %.3f' % interval)
 
 
 
@@ -537,6 +532,9 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
         if(estimador == "Mediana - Distribuição Livre"):
             mediana_aux = medianaIgor(dados, 0.5)
             dp_aux = dp_MJ(dados, 0.5)
+
+            y_out, lower, upper = icRegressao(df.dropna(), item, nc, qtd)
+            df, r2 = boxplot_fim(df.dropna(), item, qtd, y_out, lower, upper)
 
             est.append(mediana_aux)
             ls.append(mediana_aux + t_coeficiente * dp_aux / 2)
