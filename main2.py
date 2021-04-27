@@ -985,7 +985,7 @@ with st.beta_expander("Sobre", expanded=True):
     **Atenção:** Esta aplicação **não** é normatizada pela **Policia Federal**. O usuário tem total responsabildiade sobre o uso da mesma. O código fonte pode ser obtido através de solicitação ao email: gameleiro.iog@pf.gov.br
     
     
-    *Versão 1.0*
+    *Versão 1.1*
     """)
 
 
