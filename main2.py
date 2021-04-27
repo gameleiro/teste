@@ -166,7 +166,7 @@ def plotar3(serie1, serie2, item, qtd, y_out, lower, upper):
     x = serie2.astype(np.float64).dropna()
 
 
-    ax.title.set_text(item)
+    ax.title.set_text(item + " - Dispersão: Quantidade x Preço")
 
     b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
 
@@ -196,6 +196,44 @@ def plotar3(serie1, serie2, item, qtd, y_out, lower, upper):
     #st.write(y)
 
     return r_value * r_value
+
+
+
+
+def plotar4(serie1, serie2, item, lower, upper):
+
+    fig, ax = plt.subplots(1, figsize=(5.6, 4.6*1*1))
+
+    y = serie1.astype(np.float64).dropna()
+    x = serie2.astype(np.float64).dropna()
+
+
+    ax.title.set_text(item + " - Dispersão: Quantidade x Preço")
+
+    b1, bo, r_value, p_value, std_err = stats.linregress(x, y)
+
+
+
+    ax.scatter(x, y)
+
+    x1 = np.linspace(x.min(),x.max(),1000)
+
+    plt.plot(x1,np.ones(len(x1))*lower,color='blue',linestyle="--", label = "Limite Inferior")
+    plt.plot(x1,np.ones(len(x1))*upper,color='red',linestyle="--",label = "Limite Superior")
+    plt.legend(fontsize=12)
+
+
+
+    ax.set_xlabel("R²: " + str(round(r_value * r_value,2)), size=15)
+
+    st.pyplot(fig)
+    plt.close()
+
+    #st.write(y)
+    #st.write(y)
+
+    return r_value * r_value
+
 
 def boxplot2(data_frame):
 
@@ -323,6 +361,53 @@ def boxplot_fim(data_frame,item, qtd, y_out, lower, upper):
 
     return df_filter, r2
 
+
+
+
+
+def boxplot_fim_mediana(data_frame,item, lower, upper):
+
+
+    df_filter = data_frame
+
+    for col in data_frame.columns:
+
+        data_frame[col] = data_frame[col].astype(str)
+        data_frame[col] = data_frame[col].str.replace(',', '.')
+        data_frame[col] = data_frame[col].astype(float)
+        data_frame[col].dropna(inplace=True)
+
+
+
+    df = data_frame
+    df = df.loc[:, ::2]
+
+    col1, col2 = st.beta_columns(2)
+
+
+    with col1:
+        pos = df_filter.columns.get_loc(str(item))
+        st.subheader("Dados analisados")
+        st.dataframe(df_filter[df_filter.columns[pos:pos + 2]])
+
+
+
+    with col2:
+
+        pos = df_filter.columns.get_loc(str(item))
+        #st.write(data_frame.iloc[:,[pos,pos+1]])
+        serie1 = df_filter.iloc[:,pos]
+        serie2 = df_filter.iloc[:,pos+1]
+
+        r2 = plotar4(serie1, serie2, item, lower, upper)
+
+
+
+
+
+
+
+    return df_filter, r2
 
 
 
@@ -533,12 +618,14 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
             mediana_aux = medianaIgor(dados, 0.5)
             dp_aux = dp_MJ(dados, 0.5)
 
-            y_out, lower, upper = icRegressao(df.dropna(), item, nc, qtd)
-            df, r2 = boxplot_fim(df.dropna(), item, qtd, y_out, lower, upper)
+
+
 
             est.append(mediana_aux)
             ls.append(mediana_aux + t_coeficiente * dp_aux / 2)
             li.append(mediana_aux - t_coeficiente * dp_aux / 2)
+
+            df, r2 = boxplot_fim_mediana(df.dropna(), item, mediana_aux - t_coeficiente * dp_aux / 2, mediana_aux + t_coeficiente * dp_aux / 2)
 
             obs.append(" A etapa de investigação dos dados filtrou as quantidades dos elementos da amostra para intervalo de " + str(a) + " - " + str(b) +
                        ". " + obs_rm + "Foi utilizado o estimador não paramétrico de distribuição livre para a mediana com "
