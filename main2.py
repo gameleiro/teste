@@ -179,8 +179,8 @@ def processaDf(df, mr=0, nc=0.95):
             dp_aux = dp_MJ(dados,0.5)
 
             mediana.append(mediana_aux)
-            ls.append(mediana_aux + t_coeficiente*dp_aux/2)
-            li.append(mediana_aux - t_coeficiente*dp_aux/2)
+            ls.append(mediana_aux + t_coeficiente*dp_aux)
+            li.append(mediana_aux - t_coeficiente*dp_aux)
 
 
 
