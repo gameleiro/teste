@@ -391,8 +391,8 @@ def processaDf(df, mr=0, nc=0.95):
             dp_aux = dp_MJ(dados,0.5)
 
             mediana.append(mediana_aux)
-            ls.append(mediana_aux + t_coeficiente*dp_aux/2)
-            li.append(mediana_aux - t_coeficiente*dp_aux/2)
+            ls.append(mediana_aux + t_coeficiente*dp_aux)
+            li.append(mediana_aux - t_coeficiente*dp_aux)
 
 
 
@@ -455,8 +455,8 @@ def processaDf2(df, col, mr=0, nc=0.95,a=0,b=0, r2=0, qtd=0, estimador="Mediana 
             dp_aux = dp_MJ(dados, 0.5)
 
             est.append(mediana_aux)
-            ls.append(mediana_aux + t_coeficiente * dp_aux / 2)
-            li.append(mediana_aux - t_coeficiente * dp_aux / 2)
+            ls.append(mediana_aux + t_coeficiente * dp_aux )
+            li.append(mediana_aux - t_coeficiente * dp_aux )
 
             obs.append(" A etapa de investigação dos dados filtrou as quantidades dos elementos da amostra para intervalo de " + str(a) + " - " + str(b) +
                        ". " + obs_rm + "Foi utilizado o estimador não paramétrico de distribuição livre para a mediana com "
